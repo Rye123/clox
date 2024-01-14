@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <sysexits.h>
+#include "token.h"
 #include "interpreterState.h"
 #define MAX_INPUT_LEN 255
 
