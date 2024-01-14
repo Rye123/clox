@@ -29,18 +29,21 @@ typedef enum {
   TOKEN_EOF
 } TokenType;
 
-typedef struct Token {
+typedef struct {
   const TokenType type;
   const char* lexeme;
   const union
   {
-    int literal_int;
-    char* literal_str;
+    const int literal_int;
+    const char* literal_str;
   } literal;
   const int lineNum;
 } Token;
 
 // Generates a new token. If the token type is a literal, the literal will be automatically generated.
-Token* NewToken(TokenType type, char* lexeme, int lineNum);
+Token* TokenNew(TokenType type, const char* lexeme, int lineNum);
+
+// Frees the memory associated with the token
+void TokenDelete(Token* token);
 
 #endif

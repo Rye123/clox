@@ -1,3 +1,17 @@
+# Binaries
+src/interpreter
+tests/check_token
+
+# libcheck
+*.o
+*.lo
+*.la
+*.Po
+*.Plo
+libtool
+tests/*.log
+tests/*.trs
+
 # http://www.gnu.org/software/automake
 
 Makefile.in

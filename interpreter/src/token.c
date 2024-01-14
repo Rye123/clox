@@ -4,7 +4,7 @@
 #include <string.h>
 #include "token.h"
 
-Token* NewToken(TokenType type, char* lexeme, int lineNum)
+Token* TokenNew(TokenType type, const char* lexeme, int lineNum)
 {
   Token* ret = malloc(sizeof(Token));
   if (type == TOKEN_NUMBER) {
@@ -17,6 +17,12 @@ Token* NewToken(TokenType type, char* lexeme, int lineNum)
     memcpy(ret, &tok, sizeof(Token));
   } else {
     Token tok = {type, lexeme, lineNum};
+    memcpy(ret, &tok, sizeof(Token));
   }
   return ret;
+}
+
+void TokenDelete(Token* token)
+{
+  free(token);
 }

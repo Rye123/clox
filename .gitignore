@@ -84,6 +84,3 @@ autom4te.cache
 # Emacs
 *~
 .ccls-cache/
-
-# Executables
-interpreter/interpreter
