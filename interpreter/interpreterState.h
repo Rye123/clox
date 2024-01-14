@@ -10,9 +10,21 @@ typedef struct State {
 State* StateNew();
 
 // Runs the given source code in the state.
-void StateRun(State* state, char* source);
+void StateRun(State* state, const char* source);
 
 // Clears the memory associated with the state.
 void StateDelete(State* state);
+
+// Report an error associated with `lineNum` with `msg`.
+void StateReportError(State* state, int lineNum, const char* msg);
+
+
+
+
+
+
+
+
+
 
 #endif
