@@ -1,12 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <sysexits.h>
 #include "interpreterState.h"
 #define MAX_INPUT_LEN 255
 
-void runFile(char* filepath)
+// Runs a file, returning the exit code.
+int runFile(char* filepath)
 {
   FILE* fp;
+  int exit_code = EX_OK;
   fp = fopen(filepath, "r");
 
   if (fp == NULL) {
@@ -27,13 +30,17 @@ void runFile(char* filepath)
   // Run source code
   State* state = StateNew();
   StateRun(state, buf);
+  if (state->hadError)
+    exit_code = EX_DATAERR;
   StateDelete(state);
 
   // Free buffers
   free(buf);
+  return exit_code;
 }
 
-void runPrompt()
+// Runs an interactive prompt, returning the exit code.
+int runPrompt()
 {
   char line[MAX_INPUT_LEN];
   State* state = StateNew();
@@ -43,21 +50,25 @@ void runPrompt()
     if (fgets(line, sizeof(line), stdin)) {
       StateRun(state, line);
     } else {
-      return;
+      break; // No more input
     }
+
+    state->hadError = false;  // Reset flag
   }
   StateDelete(state);
+  return EX_OK;
 }
 
 int main(int argc, char** argv)
 {
+  int exit_code = EX_OK;
   if (argc > 2) {
     printf("Usage: interpreter [script]\n");
-    exit(64);  // EX_USAGE: Command used incorrectly
+    exit(EX_USAGE);
   } else if (argc == 2) {
-    runFile(argv[1]);
+    exit_code = runFile(argv[1]);
   } else {
-    runPrompt();
+    exit_code = runPrompt();
   }
-  return 0;
+  return exit_code;
 }
