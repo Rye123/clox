@@ -1,5 +1,5 @@
 CC = gcc
-DEP = interpreter.c
+DEP = interpreter.c interpreterState.c
 OUT = interpreter
 
 default: $(DEP)

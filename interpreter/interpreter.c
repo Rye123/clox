@@ -1,12 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "interpreterState.h"
 #define MAX_INPUT_LEN 255
-
-void run(char* source)
-{
-  printf("INPUT: %s\n", source);
-}
 
 void runFile(char* filepath)
 {
@@ -29,7 +25,9 @@ void runFile(char* filepath)
   fclose(fp);
 
   // Run source code
-  run(buf);
+  State* state = StateNew();
+  StateRun(state, buf);
+  StateDelete(state);
 
   // Free buffers
   free(buf);
@@ -38,15 +36,17 @@ void runFile(char* filepath)
 void runPrompt()
 {
   char line[MAX_INPUT_LEN];
+  State* state = StateNew();
 
   while (true) {
     printf("> ");
     if (fgets(line, sizeof(line), stdin)) {
-      run(line);
+      StateRun(state, line);
     } else {
       return;
     }
   }
+  StateDelete(state);
 }
 
 int main(int argc, char** argv)
