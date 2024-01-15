@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 #include <string.h>
 #include "scanner.h"
 #include "error.h"
@@ -143,6 +144,21 @@ void ScannerScan(Scanner* scanner)
 
 void ScannerDelete(Scanner* scanner)
 {
+  // Free memory associated with all lists
+  while (LinkedListLength(scanner->tokens) > 0) {
+    Token* token = (Token*) LinkedListPop(scanner->tokens);
+    TokenDelete(token);
+  }
+  while (LinkedListLength(scanner->errors) > 0) {
+    Error* error = (Error*) LinkedListPop(scanner->errors);
+    ErrorDelete(error);
+  }
+
+  assert (LinkedListLength(scanner->tokens) == 0);
+  assert (LinkedListLength(scanner->errors) == 0);
+  
+  // Delete lists
   LinkedListDelete(scanner->tokens);
+  LinkedListDelete(scanner->errors);
   free(scanner);
 }
