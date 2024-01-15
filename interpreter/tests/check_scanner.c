@@ -5,7 +5,7 @@
 #include "../src/scanner.h"
 
 START_TEST(test_singletoken){
-  const char *source = "(){},.-+;*{*}(,.)),-+";
+  const char *source = "(){},.-+;*{*}(,.)),-/+/";
   Scanner *scanner = ScannerNew(source, strlen(source));
   ScannerScan(scanner);
 
@@ -25,6 +25,7 @@ START_TEST(test_singletoken){
     case '+': ck_assert_msg(curType == TOKEN_PLUS, "type of '+' was %d", (int) curType); break;
     case ';': ck_assert_msg(curType == TOKEN_SEMICOLON, "type of ';' was %d", (int) curType); break;
     case '*': ck_assert_msg(curType == TOKEN_STAR, "type of '*' was %d", (int) curType); break;
+    case '/': ck_assert_msg(curType == TOKEN_SLASH, "type of '/' was %d", (int) curType); break;
     }
     curNode = curNode->next;
   }
@@ -46,6 +47,27 @@ START_TEST(test_doubletoken){
 
   // Ensure number of tokens is correct
   ck_assert_msg(LinkedListLength(scanner->tokens) == 9, "number of tokens expected to be 9, was instead %d", LinkedListLength(scanner->tokens));
+
+  // Loop through tokens to validate
+  LLNode* curNode = scanner->tokens->head;
+  for (int i = 0; i < LinkedListLength(scanner->tokens); i++) {
+    TokenType curType = ((Token*) curNode->data)->type;
+    ck_assert_msg(curType == expected[i], "type of tokens[%d] expected to be %d, was instead %d", i, (int) expected[i], (int) curType);
+    curNode = curNode->next;
+  }
+
+  ScannerDelete(scanner);
+}
+END_TEST
+
+START_TEST(test_comments){
+  const char *source = "/ != // the quick brown fox jumps over the lazy dog.\n! / ! // rest of the comments\n=";
+  const TokenType expected[] = {TOKEN_SLASH, TOKEN_BANG_EQUAL, TOKEN_BANG, TOKEN_SLASH, TOKEN_BANG, TOKEN_EQUAL, TOKEN_EOF};
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  // Ensure number of tokens is correct
+  ck_assert_msg(LinkedListLength(scanner->tokens) == 7, "number of tokens expected to be 7, was instead %d", LinkedListLength(scanner->tokens));
 
   // Loop through tokens to validate
   LLNode* curNode = scanner->tokens->head;
@@ -90,6 +112,7 @@ Suite *token_suite(void) {
 
   tcase_add_test(tc_core, test_singletoken);
   tcase_add_test(tc_core, test_doubletoken);
+  tcase_add_test(tc_core, test_comments);
   tcase_add_test(tc_core, test_syntaxerr);
   suite_add_tcase(s, tc_core);
   return s;

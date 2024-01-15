@@ -35,6 +35,12 @@ bool reachedEnd(Scanner* scanner)
   return scanner->curIdx >= scanner->length;
 }
 
+// Returns the current character. This is basically advance(), without actually advancing.
+char peek(Scanner *scanner)
+{
+  return *(scanner->source + scanner->curIdx);
+}
+
 // Advances the scanner, while returning the previous character (the one curIdx was on before advancement)
 char advance(Scanner* scanner)
 {
@@ -75,6 +81,14 @@ void scanToken(Scanner* scanner) {
   case '=': addToken(scanner, advanceCond(scanner, '=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL, NULL); break;
   case '<': addToken(scanner, advanceCond(scanner, '=') ? TOKEN_LESS_EQUAL : TOKEN_LESS, NULL); break;
   case '>': addToken(scanner, advanceCond(scanner, '=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER, NULL); break;
+  case '/':
+    if (advanceCond(scanner, '/')) {
+      // This is a comment, ignore the rest of the line
+      while (peek(scanner) != '\n' && !reachedEnd(scanner)) advance(scanner);
+    } else {
+      addToken(scanner, TOKEN_SLASH, NULL);
+    }
+    break;
   default:
     addError(scanner, "Unexpected character.");
   }
