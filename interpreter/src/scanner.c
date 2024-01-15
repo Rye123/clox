@@ -17,10 +17,16 @@ Scanner* ScannerNew(const char* source, const int length)
 }
 
 // Add a token to the tokens list
-void addToken(Scanner* scanner, TokenType type, char* lexeme)
+void addTokenWithSize(Scanner* scanner, TokenType type, const char* lexeme, int lexemeLen)
 {
-  Token* newToken = TokenNew(type, lexeme, scanner->curLine);
+  Token* newToken = TokenNew(type, lexeme, lexemeLen, scanner->curLine);
   LinkedListAppend(scanner->tokens, newToken);
+}
+
+void addToken(Scanner* scanner, TokenType type, const char* lexeme)
+{
+  size_t lexemeLen = scanner->curIdx - scanner->startIdx;
+  addTokenWithSize(scanner, type, lexeme, lexemeLen);
 }
 
 // Add an error to the errors list
@@ -95,6 +101,29 @@ void scanToken(Scanner* scanner) {
     break;
   case '\n':
     scanner->curLine++; break;
+  case '"': {
+    // Handle string
+    while (peek(scanner) != '"' && !reachedEnd(scanner)) {
+      // We've yet to reach the end of the string
+      if (peek(scanner) == '\n') scanner->curLine++;
+      advance(scanner);
+    }
+
+    if (reachedEnd(scanner)) {
+      addError(scanner, "Unterminated string.");
+      return;
+    }
+
+    // Here, we've reached the end of the string without any issues
+    advance(scanner); // to include the closing "
+
+    // Add the string without the enclosing quotes
+    int strStartIdx = scanner->startIdx + 1;
+    int strEndIdx = scanner->curIdx - 1;
+    addTokenWithSize(scanner, TOKEN_STRING, (scanner->source + strStartIdx), strEndIdx - strStartIdx);
+    break;
+  }
+    
   default:
     addError(scanner, "Unexpected character.");
   }
@@ -108,7 +137,7 @@ void ScannerScan(Scanner* scanner)
   }
 
   // Add EOF
-  Token* eofToken = TokenNew(TOKEN_EOF, "", scanner->curLine);
+  Token* eofToken = TokenNew(TOKEN_EOF, "", 0, scanner->curLine);
   LinkedListAppend(scanner->tokens, eofToken);
 }
 

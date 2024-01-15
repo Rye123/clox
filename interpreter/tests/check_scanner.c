@@ -129,6 +129,109 @@ START_TEST(test_whitespace){
 }
 END_TEST
 
+START_TEST(test_simplestring){
+  const char *source = "\"asdf\" \"The quick brown fox\" \n\"@#&+-\"";
+  const TokenType expected[] = {TOKEN_STRING, TOKEN_STRING, TOKEN_STRING, TOKEN_EOF};
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  // Ensure number of lines is correct
+  ck_assert_msg(scanner->curLine == 1, "expected curLine to be 1, was instead %d", scanner->curLine);
+
+  // Ensure number of tokens is correct
+  ck_assert_msg(LinkedListLength(scanner->tokens) == 4, "number of tokens expected to be 4, was instead %d", LinkedListLength(scanner->tokens));
+
+  // Validate token types
+  LLNode* curNode = scanner->tokens->head;
+  for (int i = 0; i < LinkedListLength(scanner->tokens); i++) {
+    TokenType curType = ((Token*) curNode->data)->type;
+    ck_assert_msg(curType == expected[i], "type of tokens[%d] expected to be %d, was instead %d", i, (int) expected[i], (int) curType);
+    curNode = curNode->next;
+  }
+
+  // Validate token contents
+  curNode = scanner->tokens->head;
+  // 1. asdf
+  char* nodestr = ((Token*) curNode->data)->literal.literal_str;
+  int lineNum = ((Token*) curNode->data)->lineNum;
+  ck_assert_msg(strcmp(nodestr, "asdf") == 0, "expected \"asdf\", instead got \"%s\"", nodestr);
+  ck_assert_msg(lineNum == 0, "expected linenum of \"asdf\" to be 0, was instead %d", lineNum);
+  curNode = curNode->next;
+  // 2. The quick brown fox
+  nodestr = ((Token*) curNode->data)->literal.literal_str;
+  lineNum = ((Token*) curNode->data)->lineNum;
+  ck_assert_msg(strcmp(nodestr, "The quick brown fox") == 0, "expected \"The quick brown fox\", instead got \"%s\"", nodestr);
+  ck_assert_msg(lineNum == 0, "expected linenum of \"The quick brown fox\" to be 0, was instead %d", lineNum);
+  curNode = curNode->next;
+
+  // 3. @#&+-
+  nodestr = ((Token*) curNode->data)->literal.literal_str;
+  lineNum = ((Token*) curNode->data)->lineNum;
+  ck_assert_msg(strcmp(nodestr, "@#&+-") == 0, "expected \"@#&+-\", instead got \"%s\"", nodestr);
+  ck_assert_msg(lineNum == 1, "expected linenum of \"@#&+-\" to be 0, was instead %d", lineNum);
+  curNode = curNode->next;
+
+  // Ensure no syntax errors
+  int errCount = LinkedListLength(scanner->errors);
+  ck_assert_msg(errCount == 0, "expected no errors, instead found %d errors", errCount);
+  
+  ScannerDelete(scanner);
+}
+END_TEST
+
+START_TEST(test_multilinestring){
+  const char *source = "\"asdf\nThequickbrownfox\nPeter Piper\n\"+-/";
+  const TokenType expected[] = {TOKEN_STRING, TOKEN_PLUS, TOKEN_MINUS, TOKEN_SLASH, TOKEN_EOF};
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  // Ensure number of lines is correct
+  ck_assert_msg(scanner->curLine == 3, "expected curLine to be 3, was instead %d", scanner->curLine);
+
+  // Ensure number of tokens is correct
+  ck_assert_msg(LinkedListLength(scanner->tokens) == 5, "number of tokens expected to be 5, was instead %d", LinkedListLength(scanner->tokens));
+
+  // Validate token types
+  LLNode* curNode = scanner->tokens->head;
+  for (int i = 0; i < LinkedListLength(scanner->tokens); i++) {
+    TokenType curType = ((Token*) curNode->data)->type;
+    ck_assert_msg(curType == expected[i], "type of tokens[%d] expected to be %d, was instead %d", i, (int) expected[i], (int) curType);
+    curNode = curNode->next;
+  }
+
+  // Validate token contents
+  curNode = scanner->tokens->head;
+  // asdf\nThequickbrownfox\nPeter Piper
+  char* nodestr = ((Token*) curNode->data)->literal.literal_str;
+  int lineNum = ((Token*) curNode->data)->lineNum;
+  ck_assert_msg(strcmp(nodestr, "asdf\nThequickbrownfox\nPeter Piper\n") == 0, "expected \"asdf\\nThequickbrownfox\\nPeter Piper\\n\", instead got \"%s\"", nodestr);
+  ck_assert_msg(lineNum == 3, "expected linenum to be 3, was instead %d", lineNum);
+
+  // Ensure no syntax errors
+  int errCount = LinkedListLength(scanner->errors);
+  ck_assert_msg(errCount == 0, "expected no errors, instead found %d errors", errCount);
+  
+  ScannerDelete(scanner);
+}
+END_TEST
+
+START_TEST(test_unterminatedstring){
+  const char *source = "\"The quick brown fox\nleaps over the lazy doggo+-";
+  const TokenType expected[] = {TOKEN_EOF};
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  // Ensure number of tokens is correct
+  ck_assert_msg(LinkedListLength(scanner->tokens) == 1, "number of tokens expected to be 1, was instead %d", LinkedListLength(scanner->tokens));
+
+  // Ensure 1 syntax error
+  int errCount = LinkedListLength(scanner->errors);
+  ck_assert_msg(errCount == 1, "expected 1 error, instead found %d errors", errCount);
+  
+  ScannerDelete(scanner);
+}
+END_TEST
+
 START_TEST(test_syntaxerr){
   const char *source = "@#&";
   Scanner *scanner = ScannerNew(source, strlen(source));
@@ -162,6 +265,9 @@ Suite *token_suite(void) {
   tcase_add_test(tc_core, test_doubletoken);
   tcase_add_test(tc_core, test_comments);
   tcase_add_test(tc_core, test_whitespace);
+  tcase_add_test(tc_core, test_simplestring);
+  tcase_add_test(tc_core, test_multilinestring);
+  tcase_add_test(tc_core, test_unterminatedstring);
   tcase_add_test(tc_core, test_syntaxerr);
   suite_add_tcase(s, tc_core);
   return s;
