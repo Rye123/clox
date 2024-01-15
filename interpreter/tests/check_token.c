@@ -25,13 +25,13 @@ END_TEST
 
 START_TEST (test_oobtoken)
 {
-  char buf[50];
-  snprintf(buf, 50, "%lf", DBL_MAX+1);
+  char buf[400];
+  snprintf(buf, 400, "1%f", DBL_MAX);
   Token* num_token = TokenNew(TOKEN_NUMBER, buf, strlen(buf), 1);
-  ck_assert_msg(errno != ERANGE, "Expected errno to be set to ERANGE, but instead err_no=%d", errno);
-  snprintf(buf, 50, "%lf", DBL_MIN-1);
+  ck_assert_msg(errno == ERANGE, "Expected errno to be set to ERANGE, but instead err_no=%d", errno);
+  snprintf(buf, 400, "-1%f", DBL_MAX);
   num_token = TokenNew(TOKEN_NUMBER, buf, strlen(buf), 1);
-  ck_assert_msg(errno != ERANGE, "Expected errno to be set to ERANGE, but instead err_no=%d", errno);
+  ck_assert_msg(errno == ERANGE, "Expected errno to be set to ERANGE, but instead err_no=%d", errno);
 }
 
 Suite* token_suite(void)
