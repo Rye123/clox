@@ -37,6 +37,20 @@ START_TEST (test_oobtoken)
   TokenDelete(num_token);
 }
 
+START_TEST (test_matchkeyword)
+{
+  ck_assert_int_eq(TokenMatchKeyword("and", 3), TOKEN_AND);
+  ck_assert_int_eq(TokenMatchKeyword("an", 2), TOKEN_IDENTIFIER);
+  ck_assert_int_eq(TokenMatchKeyword("or", 2), TOKEN_OR);
+  ck_assert_int_eq(TokenMatchKeyword("if", 2), TOKEN_IF);
+  ck_assert_int_eq(TokenMatchKeyword("i", 1), TOKEN_IDENTIFIER);
+  ck_assert_int_eq(TokenMatchKeyword("else", 4), TOKEN_ELSE);
+  ck_assert_int_eq(TokenMatchKeyword("return", 6), TOKEN_RETURN);
+  ck_assert_int_eq(TokenMatchKeyword("nil", 3), TOKEN_NIL);
+  ck_assert_int_eq(TokenMatchKeyword("print", 5), TOKEN_PRINT);
+  ck_assert_int_eq(TokenMatchKeyword("asdf", 4), TOKEN_IDENTIFIER);
+}
+
 Suite* token_suite(void)
 {
   Suite* s;
@@ -47,6 +61,7 @@ Suite* token_suite(void)
 
   tcase_add_test(tc_core, test_newtoken);
   tcase_add_test(tc_core, test_oobtoken);
+  tcase_add_test(tc_core, test_matchkeyword);
   suite_add_tcase(s, tc_core);
   return s;
 }

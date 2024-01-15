@@ -44,6 +44,9 @@ typedef struct {
 // Generates a new token. If the token type is a literal, the literal will be automatically generated. If the token is a literal number and exceeds the range for a double, errno will be set to ERANGE.
 Token* TokenNew(TokenType type, const char* lexeme, const int lexemeLength, int lineNum);
 
+// Returns a TokenType to match the keyword, or TOKEN_IDENTIFIER if it cannot be identified as a keyword.
+TokenType TokenMatchKeyword(const char* lexeme, const int lexemeLength);
+
 // Frees the memory associated with the token
 void TokenDelete(Token* token);
 
