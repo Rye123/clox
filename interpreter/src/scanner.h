@@ -6,7 +6,8 @@
 typedef struct {
   const char* source;
   const int length;
-  LinkedList* tokens;
+  LinkedList* tokens;  // Linked list of Token*
+  LinkedList* errors;  // Linked list of Error*
 
   int startIdx; // The start index of the lexeme to be scanned
   int curIdx;   // The current index of the scanner
@@ -16,7 +17,7 @@ typedef struct {
 // Defines a new Scanner, given the source code and the size of the source code.
 Scanner* ScannerNew(const char* source, const int length);
 
-// Scans through code, saving the tokens in the tokens attribute.
+// Scans through code, saving the tokens in the tokens attribute and any errors in the errors attribute.
 void ScannerScan(Scanner* scanner);
 
 // Frees the memory associated with the scanner.

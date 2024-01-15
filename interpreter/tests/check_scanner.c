@@ -29,6 +29,33 @@ START_TEST(test_singletoken){
     curNode = curNode->next;
   }
 
+  // Ensure EOF
+  LLNode* eofNode = scanner->tokens->tail;
+  TokenType eofType = ((Token*) eofNode->data)->type;
+  ck_assert_msg(eofType == TOKEN_EOF, "type of last token expected to be EOF, was instead %d", (int) eofType);
+
+  ScannerDelete(scanner);
+}
+END_TEST
+
+START_TEST(test_syntaxerr){
+  const char *source = "@#&";
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  // Ensure scanner tokens is empty
+  int tokenCount = LinkedListLength(scanner->tokens);
+  ck_assert_msg(tokenCount == 1, "expected 1 token (EOF), instead tokenCount = %d", tokenCount);
+  
+  // Ensure EOF
+  LLNode* eofNode = scanner->tokens->tail;
+  TokenType eofType = ((Token*) eofNode->data)->type;
+  ck_assert_msg(eofType == TOKEN_EOF, "type of last token expected to be EOF, was instead %d", (int) eofType);
+
+  // Ensure all errors
+  int errCount = LinkedListLength(scanner->errors);
+  ck_assert_msg(errCount == 3, "expected 3 errors, instead errCount = %d", errCount);
+  
   ScannerDelete(scanner);
 }
 END_TEST
@@ -41,6 +68,7 @@ Suite *token_suite(void) {
   tc_core = tcase_create("Core");
 
   tcase_add_test(tc_core, test_singletoken);
+  tcase_add_test(tc_core, test_syntaxerr);
   suite_add_tcase(s, tc_core);
   return s;
 }

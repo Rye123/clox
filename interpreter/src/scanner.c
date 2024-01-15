@@ -3,13 +3,14 @@
 #include <stdbool.h>
 #include <string.h>
 #include "scanner.h"
+#include "error.h"
 #include "token.h"
 #include "linkedlist.h"
 
 Scanner* ScannerNew(const char* source, const int length)
 {
   Scanner* scanner = malloc(sizeof(Scanner));
-  Scanner tempScanner = {source, length, LinkedListNew(sizeof(Token)), 0, 0, 0};
+  Scanner tempScanner = {source, length, LinkedListNew(sizeof(Token)), LinkedListNew(sizeof(Error)), 0, 0, 0};
   memcpy(scanner, &tempScanner, sizeof(Scanner));
 
   return scanner;
@@ -31,6 +32,12 @@ void addToken(Scanner* scanner, TokenType type, char* lexeme)
   LinkedListAppend(scanner->tokens, newToken);
 }
 
+void addError(Scanner* scanner, const char* msg)
+{
+  Error* newError = ErrorNew(scanner->curLine, scanner->curIdx, msg);
+  LinkedListAppend(scanner->errors, newError);
+}
+
 // Scans until the start of the next lexeme, initialising the lexeme as a new token.
 void scanToken(Scanner* scanner) {
   char c = advance(scanner);
@@ -45,6 +52,8 @@ void scanToken(Scanner* scanner) {
   case '+': addToken(scanner, TOKEN_PLUS, NULL); break;
   case ';': addToken(scanner, TOKEN_SEMICOLON, NULL); break;
   case '*': addToken(scanner, TOKEN_STAR, NULL); break;
+  default:
+    addError(scanner, "Unexpected character.");
   }
 }
 
