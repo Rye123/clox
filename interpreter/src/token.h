@@ -34,6 +34,7 @@ typedef struct {
   const char* lexeme;
   const union
   {
+    const void* literal_null;
     const int literal_int;
     const char* literal_str;
   } literal;

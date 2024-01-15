@@ -16,7 +16,7 @@ Token* TokenNew(TokenType type, const char* lexeme, int lineNum)
     Token tok = {type, lexeme, .literal.literal_str=lexeme, lineNum};
     memcpy(ret, &tok, sizeof(Token));
   } else {
-    Token tok = {type, lexeme, lineNum};
+    Token tok = {type, lexeme, .literal.literal_null = NULL, lineNum};
     memcpy(ret, &tok, sizeof(Token));
   }
   return ret;

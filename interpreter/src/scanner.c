@@ -26,7 +26,7 @@ void addToken(Scanner* scanner, TokenType type, char* lexeme)
 // Add an error to the errors list
 void addError(Scanner* scanner, const char* msg)
 {
-  Error* newError = ErrorNew(scanner->curLine, scanner->curIdx, msg);
+  Error* newError = ErrorNew(scanner->curLine, scanner->curIdx-1, msg);  // -1, because the error occurs at the previously consumed character.
   LinkedListAppend(scanner->errors, newError);
 }
 
@@ -89,6 +89,12 @@ void scanToken(Scanner* scanner) {
       addToken(scanner, TOKEN_SLASH, NULL);
     }
     break;
+  case ' ':
+  case '\r':
+  case '\t':
+    break;
+  case '\n':
+    scanner->curLine++; break;
   default:
     addError(scanner, "Unexpected character.");
   }

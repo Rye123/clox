@@ -2,6 +2,7 @@
 #include <check.h>
 #include "../src/linkedlist.h"
 #include "../src/token.h"
+#include "../src/error.h"
 #include "../src/scanner.h"
 
 START_TEST(test_singletoken){
@@ -35,6 +36,10 @@ START_TEST(test_singletoken){
   TokenType eofType = ((Token*) eofNode->data)->type;
   ck_assert_msg(eofType == TOKEN_EOF, "type of last token expected to be EOF, was instead %d", (int) eofType);
 
+  // Ensure no syntax errors
+  int errCount = LinkedListLength(scanner->errors);
+  ck_assert_msg(errCount == 0, "expected no errors, instead found %d errors", errCount);
+
   ScannerDelete(scanner);
 }
 END_TEST
@@ -56,6 +61,10 @@ START_TEST(test_doubletoken){
     curNode = curNode->next;
   }
 
+  // Ensure no syntax errors
+  int errCount = LinkedListLength(scanner->errors);
+  ck_assert_msg(errCount == 0, "expected no errors, instead found %d errors", errCount);
+
   ScannerDelete(scanner);
 }
 END_TEST
@@ -76,6 +85,45 @@ START_TEST(test_comments){
     ck_assert_msg(curType == expected[i], "type of tokens[%d] expected to be %d, was instead %d", i, (int) expected[i], (int) curType);
     curNode = curNode->next;
   }
+
+  // Ensure no syntax errors
+  int errCount = LinkedListLength(scanner->errors);
+  ck_assert_msg(errCount == 0, "expected no errors, instead found %d errors", errCount);
+
+  ScannerDelete(scanner);
+}
+END_TEST
+
+START_TEST(test_whitespace){
+  const char *source = "   \n   \n   /@";
+  const TokenType expected[] = {TOKEN_SLASH, TOKEN_EOF};
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  // Ensure number of lines is correct
+  ck_assert_msg(scanner->curLine == 2, "expected curLine to be 2, was instead %d", scanner->curLine);
+
+  // Ensure number of tokens is correct
+  ck_assert_msg(LinkedListLength(scanner->tokens) == 2, "number of tokens expected to be 2, was instead %d", LinkedListLength(scanner->tokens));
+
+  // Validate token
+  LLNode* curNode = scanner->tokens->head;
+  TokenType curType = ((Token*) curNode->data)->type;
+  ck_assert_msg(curType == expected[0], "expected type to be %d, was instead %d", (int) expected[0], (int) curType);
+
+  int lineNum = ((Token*) curNode->data)->lineNum;
+  ck_assert_msg(lineNum == 2, "expected linenum of slash to be 2, was instead %d", lineNum);
+
+  // Ensure 1 syntax error
+  int errCount = LinkedListLength(scanner->errors);
+  ck_assert_msg(errCount == 1, "expected 1 error, instead found %d errors", errCount);
+
+  // Ensure error line number is correct
+  LLNode* errNode = scanner->errors->head;
+  int linenum = ((Error*) errNode->data)->line;
+  int errpos = ((Error*) errNode->data)->srcIndex;
+  ck_assert_msg(linenum == 2, "expected error line to be 2, was instead %d", linenum);
+  ck_assert_msg(errpos == 12, "expected error pos to be 12, was instead %d", errpos);
 
   ScannerDelete(scanner);
 }
@@ -113,6 +161,7 @@ Suite *token_suite(void) {
   tcase_add_test(tc_core, test_singletoken);
   tcase_add_test(tc_core, test_doubletoken);
   tcase_add_test(tc_core, test_comments);
+  tcase_add_test(tc_core, test_whitespace);
   tcase_add_test(tc_core, test_syntaxerr);
   suite_add_tcase(s, tc_core);
   return s;
