@@ -2,6 +2,7 @@
 src/interpreter
 tests/check_token
 tests/check_linkedlist
+tests/check_scanner
 
 # libcheck
 *.o
