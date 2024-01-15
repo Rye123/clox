@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <ctype.h>
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
@@ -19,13 +18,29 @@ Scanner* ScannerNew(const char* source, const int length)
   return scanner;
 }
 
-// Add a token to the tokens list
+bool isDigit(char c)
+{
+  return (c >= '0' && c <= '9');
+}
+
+bool isAlpha(char c)
+{
+  return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_';
+}
+
+bool isAlnum(char c)
+{
+  return isAlpha(c) || isDigit(c);
+}
+
+// Add a token to the tokens list with a manual size.
 void addTokenWithSize(Scanner* scanner, TokenType type, const char* lexeme, int lexemeLen)
 {
   Token* newToken = TokenNew(type, lexeme, lexemeLen, scanner->curLine);
   LinkedListAppend(scanner->tokens, newToken);
 }
 
+// Add a token to the tokens list, automatically setting the size based on startIdx and curIdx.
 void addToken(Scanner* scanner, TokenType type, const char* lexeme)
 {
   size_t lexemeLen = scanner->curIdx - scanner->startIdx;
@@ -135,23 +150,30 @@ void scanToken(Scanner* scanner) {
   }
     
   default: {
-    if (isdigit(c)) {
+    if (isDigit(c)) {
       // Handle number
-      while (isdigit(peek(scanner))) advance(scanner);
+      while (isDigit(peek(scanner))) advance(scanner);
 
       // If it has fractional part...
-      if (peek(scanner) == '.' && isdigit(peekNext(scanner))) {
+      if (peek(scanner) == '.' && isDigit(peekNext(scanner))) {
 	advance(scanner); // Consume the '.'
-	while (isdigit(peek(scanner))) advance(scanner);
+	while (isDigit(peek(scanner))) advance(scanner);
       }
 
-      addTokenWithSize(scanner, TOKEN_NUMBER, (scanner->source + scanner->startIdx), scanner->curIdx - scanner->startIdx);
+      addToken(scanner, TOKEN_NUMBER, (scanner->source + scanner->startIdx));
       if (errno == ERANGE) {
-	// Remove token and report error
-	Token* tok = LinkedListPop(scanner->tokens);
-	TokenDelete(tok);
-	addError(scanner, "Number exceeds range.");
+        // Remove token and report error
+        Token *tok = LinkedListPop(scanner->tokens);
+        TokenDelete(tok);
+        addError(scanner, "Number exceeds range.");
       }
+
+    } else if (isAlpha(c)) {
+      // Handle possible identifier or reserved keyword
+      while (isAlnum(peek(scanner))) advance(scanner);
+
+      TokenType type = TokenMatchKeyword((scanner->source + scanner->startIdx), (scanner->curIdx - scanner->startIdx));
+      addToken(scanner, type, (scanner->source + scanner->startIdx));
     } else {
       addError(scanner, "Unexpected character.");
     }

@@ -392,6 +392,54 @@ START_TEST(test_bounds){
 }
 END_TEST
 
+START_TEST(test_identifiers) {
+  const char* source = "i ifconfig a an ad andy the superb sup s";
+  const char* expectedVals[] = {"i", "ifconfig", "a", "an", "ad", "andy", "the", "superb", "sup", "s"};
+  const TokenType expectedToks[] = {TOKEN_IDENTIFIER, TOKEN_IDENTIFIER, TOKEN_IDENTIFIER, TOKEN_IDENTIFIER, TOKEN_IDENTIFIER, TOKEN_IDENTIFIER, TOKEN_IDENTIFIER, TOKEN_IDENTIFIER, TOKEN_IDENTIFIER, TOKEN_IDENTIFIER, TOKEN_EOF};
+  
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  LLNode* curNode = scanner->tokens->head;
+  for (int i = 0; i < LinkedListLength(scanner->tokens); i++) {
+    TokenType curType = ((Token*) curNode->data)->type;
+    ck_assert_msg(curType == expectedToks[i], "token[%d] expected to be type %d, was %d", i, expectedToks[i], curType);
+
+    if (curType == TOKEN_IDENTIFIER) {
+      const char* tokenVal = ((Token*) curNode->data)->lexeme;
+      ck_assert_msg(strcmp(tokenVal, expectedVals[i]) == 0, "token[%d] expected to be %s, was %s", i, expectedVals[i], tokenVal);
+    }
+    curNode = curNode->next;
+  }
+
+  ScannerDelete(scanner);
+}
+END_TEST
+
+START_TEST(test_keywords) {
+  const char* source = "if true and else return super or";
+  const char* expectedVals[] = {"if", "true", "and", "else", "return", "super", "or"};
+  const TokenType expectedToks[] = {TOKEN_IF, TOKEN_TRUE, TOKEN_AND, TOKEN_ELSE, TOKEN_RETURN, TOKEN_SUPER, TOKEN_OR, TOKEN_EOF};
+  
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  LLNode* curNode = scanner->tokens->head;
+  for (int i = 0; i < LinkedListLength(scanner->tokens); i++) {
+    TokenType curType = ((Token*) curNode->data)->type;
+    ck_assert_msg(curType == expectedToks[i], "token[%d] expected to be type %d, was %d", i, expectedToks[i], curType);
+
+    if (curType != TOKEN_EOF) {
+      const char* tokenVal = ((Token*) curNode->data)->lexeme;
+      ck_assert_msg(strcmp(tokenVal, expectedVals[i]) == 0, "token[%d] expected to be %s, was %s", i, expectedVals[i], tokenVal);
+    }
+    curNode = curNode->next;
+  }
+
+  ScannerDelete(scanner);
+}
+END_TEST
+
 START_TEST(test_syntaxerr){
   const char *source = "@#&";
   Scanner *scanner = ScannerNew(source, strlen(source));
@@ -433,6 +481,8 @@ Suite *token_suite(void) {
   tcase_add_test(tc_core, test_positivefloat);
   tcase_add_test(tc_core, test_negativefloat);
   tcase_add_test(tc_core, test_bounds);
+  tcase_add_test(tc_core, test_identifiers);
+  tcase_add_test(tc_core, test_keywords);
   tcase_add_test(tc_core, test_syntaxerr);
   suite_add_tcase(s, tc_core);
   return s;
