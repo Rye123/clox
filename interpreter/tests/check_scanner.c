@@ -1,4 +1,6 @@
+#include <stdio.h>
 #include <stdlib.h>
+#include <float.h>
 #include <check.h>
 #include "../src/linkedlist.h"
 #include "../src/token.h"
@@ -232,6 +234,164 @@ START_TEST(test_unterminatedstring){
 }
 END_TEST
 
+START_TEST(test_simplenumber){
+  const char *source = "1 2 3";
+  const TokenType expected[] = {TOKEN_NUMBER, TOKEN_NUMBER, TOKEN_NUMBER, TOKEN_EOF};
+  const double expectedNums[] = {1, 2, 3};
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  // Validate token types
+  LLNode* curNode = scanner->tokens->head;
+  for (int i = 0; i < LinkedListLength(scanner->tokens); i++) {
+    TokenType curType = ((Token*) curNode->data)->type;
+    double curValue = ((Token*) curNode->data)->literal.literal_num;
+
+    // Validate type
+    ck_assert_msg(curType == expected[i], "type of tokens[%d] expected to be %d, was instead %d", i, (int) expected[i], (int) curType);
+
+    // Validate value
+    if (curType == TOKEN_NUMBER)
+      ck_assert_msg(curValue == expectedNums[i], "tokens[%d] expected to be %f, was instead %f", i, expectedNums[i], curValue);
+    
+    curNode = curNode->next;
+  }
+
+  // Ensure no syntax errors
+  int errCount = LinkedListLength(scanner->errors);
+  ck_assert_msg(errCount == 0, "expected no errors, instead found %d errors", errCount);
+  
+  ScannerDelete(scanner);
+}
+END_TEST
+
+START_TEST(test_negativenumber){
+  const char *source = "-1 2 -3";
+  const TokenType expected[] = {TOKEN_MINUS, TOKEN_NUMBER, TOKEN_NUMBER, TOKEN_MINUS, TOKEN_NUMBER, TOKEN_EOF};
+  const double expectedNums[] = {1, 2, 3};
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  // Validate token types
+  LLNode* curNode = scanner->tokens->head;
+  int test_number = 0;
+  for (int i = 0; i < LinkedListLength(scanner->tokens); i++) {
+    TokenType curType = ((Token*) curNode->data)->type;
+    double curValue = ((Token*) curNode->data)->literal.literal_num;
+
+    // Validate type
+    ck_assert_msg(curType == expected[i], "type of tokens[%d] expected to be %d, was instead %d", i, (int) expected[i], (int) curType);
+
+    // Validate value
+    if (curType == TOKEN_NUMBER) {
+      ck_assert_msg(curValue == expectedNums[test_number],
+                    "tokens[%d] expected to be %f, was instead %f", i,
+                    expectedNums[test_number], curValue);
+      test_number++;
+    }
+
+    curNode = curNode->next;
+  }
+
+  // Ensure no syntax errors
+  int errCount = LinkedListLength(scanner->errors);
+  ck_assert_msg(errCount == 0, "expected no errors, instead found %d errors", errCount);
+  
+  ScannerDelete(scanner);
+}
+END_TEST
+
+START_TEST(test_positivefloat){
+  const char *source = "3.141592654 2.718281 6.69 0.0";
+  const TokenType expected[] = {TOKEN_NUMBER, TOKEN_NUMBER, TOKEN_NUMBER, TOKEN_NUMBER, TOKEN_EOF};
+  const double expectedNums[] = {3.141592654, 2.718281, 6.69, 0.0};
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  LLNode* curNode = scanner->tokens->head;
+  int test_number = 1;
+  for (int i = 0; i < LinkedListLength(scanner->tokens); i++) {
+    TokenType curType = ((Token*) curNode->data)->type;
+    double curValue = ((Token*) curNode->data)->literal.literal_num;
+
+    // Validate type
+    ck_assert_msg(curType == expected[i], "type of tokens[%d] expected to be %d, was instead %d", i, (int) expected[i], (int) curType);
+
+    // Validate value
+    if (curType == TOKEN_NUMBER)
+      ck_assert_msg(curValue == expectedNums[i], "tokens[%d] expected to be %f, was instead %f", i, expectedNums[i], curValue);
+    
+    curNode = curNode->next;
+  }
+
+  // Ensure no syntax errors
+  int errCount = LinkedListLength(scanner->errors);
+  ck_assert_msg(errCount == 0, "expected no errors, instead found %d errors", errCount);
+  
+  ScannerDelete(scanner);
+}
+END_TEST
+
+START_TEST(test_negativefloat){
+  const char *source = "-3.141592654 -2.718281 -6.69";
+  const TokenType expected[] = {TOKEN_MINUS, TOKEN_NUMBER, TOKEN_MINUS, TOKEN_NUMBER, TOKEN_MINUS, TOKEN_NUMBER, TOKEN_EOF};
+  const double expectedNums[] = {3.141592654, 2.718281, 6.69};
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  LLNode* curNode = scanner->tokens->head;
+  int test_number = 0;
+  for (int i = 0; i < LinkedListLength(scanner->tokens); i++) {
+    TokenType curType = ((Token*) curNode->data)->type;
+    double curValue = ((Token*) curNode->data)->literal.literal_num;
+
+    // Validate type
+    ck_assert_msg(curType == expected[i], "type of tokens[%d] expected to be %d, was instead %d", i, (int) expected[i], (int) curType);
+
+    // Validate value
+    if (curType == TOKEN_NUMBER) {
+      ck_assert_msg(curValue == expectedNums[test_number],
+                    "tokens[%d] expected to be %f, was instead %f", i,
+                    expectedNums[test_number], curValue);
+      test_number++;
+    }
+    
+    curNode = curNode->next;
+  }
+
+  // Ensure no syntax errors
+  int errCount = LinkedListLength(scanner->errors);
+  ck_assert_msg(errCount == 0, "expected no errors, instead found %d errors", errCount);
+  
+  ScannerDelete(scanner);
+}
+END_TEST
+
+START_TEST(test_bounds){
+  char source[2000];
+  snprintf(source, 2000, "1%f 1%f -1%f", DBL_MAX, DBL_MAX, DBL_MAX);
+  
+  const TokenType expected[] = {TOKEN_MINUS, TOKEN_EOF};
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  LLNode* curNode = scanner->tokens->head;
+  int test_number = 0;
+  for (int i = 0; i < LinkedListLength(scanner->tokens); i++) {
+    TokenType curType = ((Token*) curNode->data)->type;
+    ck_assert_msg(curType == expected[i], "type of tokens[%d] expected to be %d, was instead %d", i, (int) expected[i], (int) curType);
+
+    curNode = curNode->next;
+  }
+
+  // Ensure syntax errors for the range being exceeded
+  int errCount = LinkedListLength(scanner->errors);
+  ck_assert_msg(errCount == 3, "expected 3 errors, instead found %d errors", errCount);
+  
+  ScannerDelete(scanner);
+}
+END_TEST
+
 START_TEST(test_syntaxerr){
   const char *source = "@#&";
   Scanner *scanner = ScannerNew(source, strlen(source));
@@ -268,6 +428,11 @@ Suite *token_suite(void) {
   tcase_add_test(tc_core, test_simplestring);
   tcase_add_test(tc_core, test_multilinestring);
   tcase_add_test(tc_core, test_unterminatedstring);
+  tcase_add_test(tc_core, test_simplenumber);
+  tcase_add_test(tc_core, test_negativenumber);
+  tcase_add_test(tc_core, test_positivefloat);
+  tcase_add_test(tc_core, test_negativefloat);
+  tcase_add_test(tc_core, test_bounds);
   tcase_add_test(tc_core, test_syntaxerr);
   suite_add_tcase(s, tc_core);
   return s;

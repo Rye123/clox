@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <ctype.h>
 #include <assert.h>
 #include <string.h>
+#include <errno.h>
 #include "scanner.h"
 #include "error.h"
 #include "token.h"
@@ -46,6 +48,13 @@ bool reachedEnd(Scanner* scanner)
 char peek(Scanner *scanner)
 {
   return *(scanner->source + scanner->curIdx);
+}
+
+// Returns the next character.
+char peekNext(Scanner *scanner)
+{
+  if (scanner->curIdx + 1 >= scanner->length) return '\0';
+  return *(scanner->source + scanner->curIdx + 1);
 }
 
 // Advances the scanner, while returning the previous character (the one curIdx was on before advancement)
@@ -125,8 +134,28 @@ void scanToken(Scanner* scanner) {
     break;
   }
     
-  default:
-    addError(scanner, "Unexpected character.");
+  default: {
+    if (isdigit(c)) {
+      // Handle number
+      while (isdigit(peek(scanner))) advance(scanner);
+
+      // If it has fractional part...
+      if (peek(scanner) == '.' && isdigit(peekNext(scanner))) {
+	advance(scanner); // Consume the '.'
+	while (isdigit(peek(scanner))) advance(scanner);
+      }
+
+      addTokenWithSize(scanner, TOKEN_NUMBER, (scanner->source + scanner->startIdx), scanner->curIdx - scanner->startIdx);
+      if (errno == ERANGE) {
+	// Remove token and report error
+	Token* tok = LinkedListPop(scanner->tokens);
+	TokenDelete(tok);
+	addError(scanner, "Number exceeds range.");
+      }
+    } else {
+      addError(scanner, "Unexpected character.");
+    }
+  }
   }
 }
 
