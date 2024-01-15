@@ -19,7 +19,8 @@ START_TEST (test_newtoken)
   Token* str_token = TokenNew(TOKEN_STRING, "asdf", 4, 1);
   ck_assert_msg(strcmp(str_token->literal.literal_str, "asdf") == 0, "Expected string literal to be \"asdf\", was instead %s", str_token->literal.literal_str);
 
-  TokenDelete(num_token); TokenDelete(str_token);
+  TokenDelete(num_token); TokenDelete(num_token2); TokenDelete(num_token3);
+  TokenDelete(str_token);
 }
 END_TEST
 
@@ -29,9 +30,11 @@ START_TEST (test_oobtoken)
   snprintf(buf, 400, "1%f", DBL_MAX);
   Token* num_token = TokenNew(TOKEN_NUMBER, buf, strlen(buf), 1);
   ck_assert_msg(errno == ERANGE, "Expected errno to be set to ERANGE, but instead err_no=%d", errno);
+  TokenDelete(num_token);
   snprintf(buf, 400, "-1%f", DBL_MAX);
   num_token = TokenNew(TOKEN_NUMBER, buf, strlen(buf), 1);
   ck_assert_msg(errno == ERANGE, "Expected errno to be set to ERANGE, but instead err_no=%d", errno);
+  TokenDelete(num_token);
 }
 
 Suite* token_suite(void)
