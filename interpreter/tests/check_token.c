@@ -1,17 +1,38 @@
+#include <stdio.h>
 #include <stdlib.h>
+#include <float.h>
+#include <errno.h>
 #include <check.h>
 #include "../src/token.h"
 
 START_TEST (test_newtoken)
 {
   Token* num_token = TokenNew(TOKEN_NUMBER, "42", 2, 1);
-  ck_assert_msg((num_token->literal.literal_int == 42), "Expected numerical literal to be 42, was instead %d", num_token->literal.literal_int);
+  ck_assert_msg((num_token->literal.literal_num == 42.0), "Expected numerical literal to be 42, was instead %f", num_token->literal.literal_num);
+  
+  Token* num_token2 = TokenNew(TOKEN_NUMBER, "69.6969", 7, 1);
+  ck_assert_msg((num_token2->literal.literal_num == 69.6969), "Expected numerical literal to be 69.6969, was instead %f", num_token2->literal.literal_num);
+  
+  Token* num_token3 = TokenNew(TOKEN_NUMBER, "-3.1415926535898", 16, 1);
+  ck_assert_msg((num_token3->literal.literal_num == -3.1415926535898), "Expected numerical literal to be -3.1415926535898, was instead %f", num_token3->literal.literal_num);
+  
   Token* str_token = TokenNew(TOKEN_STRING, "asdf", 4, 1);
   ck_assert_msg(strcmp(str_token->literal.literal_str, "asdf") == 0, "Expected string literal to be \"asdf\", was instead %s", str_token->literal.literal_str);
 
   TokenDelete(num_token); TokenDelete(str_token);
 }
 END_TEST
+
+START_TEST (test_oobtoken)
+{
+  char buf[50];
+  snprintf(buf, 50, "%lf", DBL_MAX+1);
+  Token* num_token = TokenNew(TOKEN_NUMBER, buf, strlen(buf), 1);
+  ck_assert_msg(errno != ERANGE, "Expected errno to be set to ERANGE, but instead err_no=%d", errno);
+  snprintf(buf, 50, "%lf", DBL_MIN-1);
+  num_token = TokenNew(TOKEN_NUMBER, buf, strlen(buf), 1);
+  ck_assert_msg(errno != ERANGE, "Expected errno to be set to ERANGE, but instead err_no=%d", errno);
+}
 
 Suite* token_suite(void)
 {
@@ -22,6 +43,7 @@ Suite* token_suite(void)
   tc_core = tcase_create("Core");
 
   tcase_add_test(tc_core, test_newtoken);
+  tcase_add_test(tc_core, test_oobtoken);
   suite_add_tcase(s, tc_core);
   return s;
 }
