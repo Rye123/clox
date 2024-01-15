@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <sysexits.h>
+#include <string.h>
 #include "token.h"
+#include "scanner.h"
 #include "interpreterState.h"
 #define MAX_INPUT_LEN 255
 
@@ -30,7 +32,7 @@ int runFile(char* filepath)
 
   // Run source code
   State* state = StateNew();
-  StateRun(state, buf);
+  StateRun(state, buf, sz);
   if (state->hadError)
     exit_code = EX_DATAERR;
   StateDelete(state);
@@ -49,7 +51,7 @@ int runPrompt()
   while (true) {
     printf("> ");
     if (fgets(line, sizeof(line), stdin)) {
-      StateRun(state, line);
+      StateRun(state, line, strlen(line));
     } else {
       break; // No more input
     }
