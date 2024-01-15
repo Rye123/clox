@@ -34,15 +34,15 @@ typedef struct {
   const char* lexeme;
   const union
   {
-    const void* literal_null;
-    const int literal_int;
-    const char* literal_str;
+    void* literal_null;
+    int literal_int;
+    char* literal_str;
   } literal;
   const int lineNum;
 } Token;
 
 // Generates a new token. If the token type is a literal, the literal will be automatically generated.
-Token* TokenNew(TokenType type, const char* lexeme, int lineNum);
+Token* TokenNew(TokenType type, const char* lexeme, const int lexemeLength, int lineNum);
 
 // Frees the memory associated with the token
 void TokenDelete(Token* token);

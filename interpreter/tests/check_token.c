@@ -4,9 +4,9 @@
 
 START_TEST (test_newtoken)
 {
-  Token* num_token = TokenNew(TOKEN_NUMBER, "42", 1);
+  Token* num_token = TokenNew(TOKEN_NUMBER, "42", 2, 1);
   ck_assert_msg((num_token->literal.literal_int == 42), "Expected numerical literal to be 42, was instead %d", num_token->literal.literal_int);
-  Token* str_token = TokenNew(TOKEN_STRING, "asdf", 1);
+  Token* str_token = TokenNew(TOKEN_STRING, "asdf", 4, 1);
   ck_assert_msg(strcmp(str_token->literal.literal_str, "asdf") == 0, "Expected string literal to be \"asdf\", was instead %s", str_token->literal.literal_str);
 
   TokenDelete(num_token); TokenDelete(str_token);
