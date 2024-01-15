@@ -38,6 +38,27 @@ START_TEST(test_singletoken){
 }
 END_TEST
 
+START_TEST(test_doubletoken){
+  const char *source = "! != = == < <= > >=";
+  const TokenType expected[] = {TOKEN_BANG, TOKEN_BANG_EQUAL, TOKEN_EQUAL, TOKEN_EQUAL_EQUAL, TOKEN_LESS, TOKEN_LESS_EQUAL, TOKEN_GREATER, TOKEN_GREATER_EQUAL, TOKEN_EOF};
+  Scanner *scanner = ScannerNew(source, strlen(source));
+  ScannerScan(scanner);
+
+  // Ensure number of tokens is correct
+  ck_assert_msg(LinkedListLength(scanner->tokens) == 9, "number of tokens expected to be 9, was instead %d", LinkedListLength(scanner->tokens));
+
+  // Loop through tokens to validate
+  LLNode* curNode = scanner->tokens->head;
+  for (int i = 0; i < LinkedListLength(scanner->tokens); i++) {
+    TokenType curType = ((Token*) curNode->data)->type;
+    ck_assert_msg(curType == expected[i], "type of tokens[%d] expected to be %d, was instead %d", i, (int) expected[i], (int) curType);
+    curNode = curNode->next;
+  }
+
+  ScannerDelete(scanner);
+}
+END_TEST
+
 START_TEST(test_syntaxerr){
   const char *source = "@#&";
   Scanner *scanner = ScannerNew(source, strlen(source));
@@ -68,6 +89,7 @@ Suite *token_suite(void) {
   tc_core = tcase_create("Core");
 
   tcase_add_test(tc_core, test_singletoken);
+  tcase_add_test(tc_core, test_doubletoken);
   tcase_add_test(tc_core, test_syntaxerr);
   suite_add_tcase(s, tc_core);
   return s;
