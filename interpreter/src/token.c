@@ -8,29 +8,25 @@
 Token* TokenNew(TokenType type, const char* lexeme, const int lexemeLen, int lineNum)
 {
   Token* ret = malloc(sizeof(Token));
+
+  // Create a null-terminated copy of the lexeme to be saved
+  char* lexeme_cpy = NULL;
+  if (lexeme != NULL) {
+    lexeme_cpy = malloc((lexemeLen + 1) * sizeof(char));
+    memcpy(lexeme_cpy, lexeme, lexemeLen);
+    lexeme_cpy[lexemeLen] = '\0';
+  }
+
   if (type == TOKEN_NUMBER) {
-    // Convert lexeme into an string first for strtod
-    char* string_literal = malloc((lexemeLen + 1) * sizeof(char));
-    memcpy(string_literal, lexeme, lexemeLen);
-    string_literal[lexemeLen] = '\0';
-
     // Convert from string to double
-    double literal_num = strtod(string_literal, NULL);
-    free(string_literal);
-    Token tok = {type, lexeme, .literal.literal_num=literal_num, lineNum};
+    double literal_num = strtod(lexeme_cpy, NULL);
+    Token tok = {type, lexeme_cpy, .literal.literal_num=literal_num, lineNum};
     memcpy(ret, &tok, sizeof(Token));
-
-    
   } else if (type == TOKEN_STRING) {
-    // Allocate space for the string
-    char* string_literal = malloc((lexemeLen + 1) * sizeof(char));
-    memcpy(string_literal, lexeme, lexemeLen);
-    string_literal[lexemeLen] = '\0';
-    
-    Token tok = {type, lexeme, .literal.literal_str=string_literal, lineNum};
+    Token tok = {type, lexeme_cpy, .literal.literal_str = lexeme_cpy, lineNum};
     memcpy(ret, &tok, sizeof(Token));
   } else {
-    Token tok = {type, lexeme, .literal.literal_null = NULL, lineNum};
+    Token tok = {type, lexeme_cpy, .literal.literal_null=NULL, lineNum};
     memcpy(ret, &tok, sizeof(Token));
   }
   return ret;
@@ -65,9 +61,6 @@ TokenType TokenMatchKeyword(const char* lexeme, const int lexemeLength)
 
 void TokenDelete(Token* token)
 {
-  if (token->type == TOKEN_STRING) {
-    // free space allocated for the string
-    free(token->literal.literal_str);
-  }
+  free(token->lexeme);
   free(token);
 }

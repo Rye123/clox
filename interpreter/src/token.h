@@ -31,7 +31,7 @@ typedef enum {
 
 typedef struct {
   const TokenType type;
-  const char* lexeme;
+  char* lexeme;
   const union
   {
     void* literal_null;
